@@ -3,6 +3,7 @@ const
     router = require("express").Router(),
     Users = require("../users/users-model.js");
 
+
 router
     .post("/register", (req, res) => {
         const 
@@ -16,21 +17,35 @@ router
             .then(info => res.status(201).json(info))
             .catch(err => res.status(500).json(err))
     })
-    router.post("/login", (req, res) => {
-        const {username, password} = req.body;
-        //console.log(req.body)
-        Users
-            .findBy({username})
-            .first()
-            .then(user => {
-                console.log(password, user.password)
-                if(user && bcrypt.compareSync(password, user.password)){
-                    res.status(200).json({message: `Logged in.`})
-                }
-                else{
+    
+router.post("/login", (req, res) => {
+    const {username, password} = req.body;
+    // console.log(req)
+    Users
+        .findBy({username})
+        .first()
+        .then(user => {
+            if(user && bcrypt.compareSync(password, user.password)){
+                // saves session for the client and sends back a cookie
+                req.session.user = user;
+
+                res.status(200).json({message: `Logged in.`})
+            }
+            else{
                     (res.status(401).json({message: "You shall not pass!"}))
-                }
-            })
-    })
+            }
+        })
+});
+
+
+router.get("/logout", (req, res) => {
+    if(req.session.user){
+        req.session.destroy();
+        res.status(200).json({message: "You're now logged out."});
+    }
+    else{
+        res.status(200).json({message: "Please log in to log out."})
+    }
+})
 
 module.exports = router;
